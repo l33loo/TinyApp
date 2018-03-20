@@ -11,7 +11,12 @@
   </head>
   <body>
     <p>This is the official directory of TinyApp URLs:</p>
-    <p><%= urls %></p>
+    <ul>
+      <% var keys = Object.keys(urls); %>
+      <% keys.forEach(function(key) { %>
+        <li><%= urls[key] + " --> " + key; %></li>
+      <% }); %>
+    <ul>
     <p>Click here to create a TinyApp URL!</p>
   </body>
 </html>
