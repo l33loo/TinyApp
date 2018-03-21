@@ -1,5 +1,6 @@
 var express = require("express");
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 var app = express();
 
 // Connect to my environment's default port. If that fails, use port 8080.
@@ -11,6 +12,8 @@ app.set("view engine", "ejs");
 /* Add middleware that automatically parses forms and stores the result
 as a dictionary (object) in req.body. */
 app.use(bodyParser.urlencoded({extended: true}));
+
+app.use(cookieParser());
 
 // Database of URL pairs.
 var urlDatabase = {
@@ -101,6 +104,13 @@ app.get("/u/:shortURL", (req, res) => {
   } else {
     res.end("<html><body>This TinyURL does not exist. Please try again.</body></html>\n");
   }
+});
+
+// Add username for login via cookie.
+app.post("/login", (req, res) => {
+  res.cookie("username", req.body.username);
+  res.redirect("/urls");
+  // console.log(req.body.username);
 });
 
 /* Change the long URL associated with a given TinyURL
