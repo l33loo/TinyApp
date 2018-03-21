@@ -59,8 +59,24 @@ app.get("/urls/:id", (req, res) => {
 
 // Webpage that redirects from short URL to the target website.
 app.get("/u/:shortURL", (req, res) => {
-  let longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+
+  // Check whether the provided short URL matches anything from the database.
+  let match = 0;
+  Object.keys(urlDatabase).forEach(function(key) {
+
+    // If there is a match, redirect.
+    if (key === req.params.shortURL) {
+      match++;
+    }
+  });
+  if (match) {
+    let longURL = urlDatabase[req.params.shortURL];
+    res.redirect(longURL);
+
+  // If there is no match, display error.
+  } else {
+    res.end("<html><body>This TinyURL does not exist. Please try again.</body></html>\n");
+  }
 });
 
 // Process POST requests. Redirects to a page that displays the new URL pair.
