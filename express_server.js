@@ -5,16 +5,19 @@ var app = express();
 // Port 80 or the one my environment is using?
 var PORT = process.env.PORT || 8080;
 
+// Use ejs view engine.
 app.set("view engine", "ejs");
 
 // Parse POST requests.
 app.use(bodyParser.urlencoded({extended: true}));
 
+// Database of URL pairs.
 var urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+// Generate a random short URL.
 function generateRandomString() {
   let randomStr = "";
   let possibleChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -36,31 +39,31 @@ app.get("/hello", (req, res) => {
   res.end("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-/* Pass the URL data into the TinyApp URL directory
-(i.e., urls_index.ejs template).
-*/
+/* URL directory webpage. */
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
-//
+// Webpage where the user can create a new short URL.
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-// Display a single URL and its shortened form.
+/* Webpage that displays the long URL of a given short one
+(i.e., equivalent to a search engine). */
 app.get("/urls/:id", (req, res) => {
   let templateVars = { urls: urlDatabase, shortURL: req.params.id };
   res.render("urls_show", templateVars);
 });
 
+// Webpage that redirects from short URL to the target website.
 app.get("/u/:shortURL", (req, res) => {
   let longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
 
-// Process POST requests.
+// Process POST requests. Redirects to a page that displays the new URL pair.
 app.post("/urls", (req, res) => {
   console.log(req.body);
   let shortURL = generateRandomString();
@@ -68,6 +71,7 @@ app.post("/urls", (req, res) => {
   res.redirect("/urls/" + shortURL);
 })
 
+// Add event listener to the selected port.
 app.listen(PORT, () => {
   console.log(`TinyApp is listening on port ${PORT}!`);
 });
