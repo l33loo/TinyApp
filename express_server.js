@@ -2,13 +2,14 @@ var express = require("express");
 const bodyParser = require("body-parser");
 var app = express();
 
-// Port 80 or the one my environment is using?
+// Connect to my environment's default port. If that fails, use port 8080.
 var PORT = process.env.PORT || 8080;
 
 // Use ejs view engine.
 app.set("view engine", "ejs");
 
-// Parse POST requests.
+/* Add middleware that automatically parses forms and stores the result
+as a dictionary (object) in req.body. */
 app.use(bodyParser.urlencoded({extended: true}));
 
 // Database of URL pairs.
@@ -27,38 +28,41 @@ function generateRandomString() {
   return randomStr;
 }
 
+// Access home page.
 app.get("/", (req, res) => {
   res.end("Hello!");
 });
 
+// Access URL database in JSON format.
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// Access Hello page.
 app.get("/hello", (req, res) => {
   res.end("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-/* URL directory webpage. */
+// Access URL directory webpage.
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
-// Webpage where the user can create a new short URL.
+// Access webpage where the user can create a new short URL.
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-/* Webpage that displays the long URL of a given short one
-(i.e., equivalent to a search engine). */
+/* Access webpage that displays the long URL of a given short one
+(like a search engine). */
 app.get("/urls/:id", (req, res) => {
 
   // Check whether the provided short URL matches anything from the database.
   let match = 0;
   Object.keys(urlDatabase).forEach(function(key) {
 
-    // If there is a match, redirect.
+    // Check for match.
     if (key === req.params.id) {
       match++;
     }
@@ -75,18 +79,20 @@ app.get("/urls/:id", (req, res) => {
   }
 });
 
-// Webpage that redirects from short URL to the target website.
+// Access webpage that redirects from short URL to the target website.
 app.get("/u/:shortURL", (req, res) => {
 
   // Check whether the provided short URL matches anything from the database.
   let match = 0;
   Object.keys(urlDatabase).forEach(function(key) {
 
-    // If there is a match, redirect.
+    // Check for a match.
     if (key === req.params.shortURL) {
       match++;
     }
   });
+
+  // If there is a match, redirect.
   if (match) {
     let longURL = urlDatabase[req.params.shortURL];
     res.redirect(longURL);
@@ -97,23 +103,21 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
-
+/* Change the long URL associated with a given TinyURL
+and update the URL database.*/
 app.post("/urls/:id", (req, res) => {
   let shortURL = req.params.id;
   urlDatabase[shortURL] = req.body.longURL;
-  console.log(urlDatabase);
 });
 
-// Process POST requests. Redirects to a page that displays the new URL pair.
+// Create a new short URL and update the URL database.
 app.post("/urls", (req, res) => {
-  // console.log(req.body);
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect("/urls/" + shortURL);
 });
 
-
-
+// Delete a given short URL.
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
