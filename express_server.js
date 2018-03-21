@@ -2,6 +2,15 @@ var express = require("express");
 const bodyParser = require("body-parser");
 var app = express();
 
+function generateRandomString() {
+  let randomStr = "";
+  let possibleChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  if (let i = 0; i < 6; i++) {
+    randomStr += possibleChar.charAt(Math.floor(Math.random() * possibleChar.length));
+  }
+  return randomStr;
+}
+
 // Parse POST requests.
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -43,16 +52,20 @@ app.get("/urls/:id", (req, res) => {
 
 //
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  // let urlDatabase = { longURL: req.body.longURL };
+  res.render("urls_new"/*, urlDatabase*/);
 });
 
 // Process POST requests.
 app.post("/urls", (req, res) => {
   console.log(req.body);
   res.send("Ok");
+  generateRandomString();
 });
 
 app.listen(PORT, () => {
   console.log(`TinyApp is listening on port ${PORT}!`);
 });
+
+
 
