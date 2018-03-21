@@ -8,6 +8,11 @@
     <title>TinyApp URL Directory Search</title>
   </head>
   <body>
-    <p>The result of your search is: <%= shortURL + " --> " + urls[shortURL] %></p>
+    <p>ShortURL: <%= shortURL %></p>
+    <form action="/urls/<%= shortURL %>" method="POST" style="margin:150px">
+      <input id="longURL" type="text" name="longURL" value=<%= urls[shortURL] %>
+      style="width: 300px">
+      <input type="submit" value="Update">
+    </form>
   </body>
 </html>

@@ -97,13 +97,22 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
+
+app.post("/urls/:id", (req, res) => {
+  let shortURL = req.params.id;
+  urlDatabase[shortURL] = req.body.longURL;
+  console.log(urlDatabase);
+});
+
 // Process POST requests. Redirects to a page that displays the new URL pair.
 app.post("/urls", (req, res) => {
-  console.log(req.body);
+  // console.log(req.body);
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect("/urls/" + shortURL);
 });
+
+
 
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
