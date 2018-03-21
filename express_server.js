@@ -1,5 +1,9 @@
 var express = require("express");
+const bodyParser = require("body-parser");
 var app = express();
+
+// Parse POST requests.
+app.use(bodyParser.urlencoded({extended: true}));
 
 // Port 80 or the one my environment is using?
 var PORT = process.env.PORT || 8080;
@@ -37,7 +41,18 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+//
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+
+// Process POST requests.
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  res.send("Ok");
+});
+
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`TinyApp is listening on port ${PORT}!`);
 });
 
