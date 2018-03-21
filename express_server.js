@@ -103,7 +103,12 @@ app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect("/urls/" + shortURL);
-})
+});
+
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls");
+});
 
 // Add event listener to the selected port.
 app.listen(PORT, () => {
