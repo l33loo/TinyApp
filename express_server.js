@@ -5,7 +5,7 @@ var app = express();
 function generateRandomString() {
   let randomStr = "";
   let possibleChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  if (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 6; i++) {
     randomStr += possibleChar.charAt(Math.floor(Math.random() * possibleChar.length));
   }
   return randomStr;
@@ -50,17 +50,26 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// Process POST requests.
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  res.send("Ok");
+  let shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+})
+  .get("/urls/<shortURL>", (req, res) => {
+
+  });
+
 //
 app.get("/urls/new", (req, res) => {
   // let urlDatabase = { longURL: req.body.longURL };
   res.render("urls_new"/*, urlDatabase*/);
 });
 
-// Process POST requests.
-app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("Ok");
-  generateRandomString();
+app.get("/u/:shortURL", (req, res) => {
+  let longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
 app.listen(PORT, () => {
