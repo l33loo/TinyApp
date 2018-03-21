@@ -14,7 +14,10 @@
     <ul>
       <% var keys = Object.keys(urls); %>
       <% keys.forEach(function(key) { %>
-        <li><%= urls[key] + " --> " + key; %></li>
+      <li><%= urls[key] + " --> " + key; %>
+        <form method="POST" action="/urls/<%= key %>/delete">
+        <input type="submit" value="Delete">
+        </form></li>
       <% }); %>
     <ul>
     <a href="http://localhost:8080/urls/new">Click here to create a TinyApp URL!</a>
