@@ -53,8 +53,26 @@ app.get("/urls/new", (req, res) => {
 /* Webpage that displays the long URL of a given short one
 (i.e., equivalent to a search engine). */
 app.get("/urls/:id", (req, res) => {
-  let templateVars = { urls: urlDatabase, shortURL: req.params.id };
-  res.render("urls_show", templateVars);
+
+  // Check whether the provided short URL matches anything from the database.
+  let match = 0;
+  Object.keys(urlDatabase).forEach(function(key) {
+
+    // If there is a match, redirect.
+    if (key === req.params.id) {
+      match++;
+    }
+  });
+
+  // If there is a match, redirect.
+  if (match) {
+    let templateVars = { urls: urlDatabase, shortURL: req.params.id };
+    res.render("urls_show", templateVars);
+
+  // If there is no match, display error.
+  } else {
+    res.end("<html><body>This TinyURL does not exist. Please try again.</body></html>\n");
+  }
 });
 
 // Webpage that redirects from short URL to the target website.
