@@ -61,8 +61,9 @@ app.get("/hello", (req, res) => {
 
 // Access URL directory webpage.
 app.get("/urls", (req, res) => {
+  let userId = req.cookies["user_id"];
   let templateVars = { urls: urlDatabase, users: users,
-    username: req.body.username };
+    user: users[userId] };
   res.render("urls_index", templateVars);
 });
 
@@ -74,6 +75,8 @@ app.get("/urls/new", (req, res) => {
 /* Access webpage that displays the long URL of a given short one
 (like a search engine). */
 app.get("/urls/:id", (req, res) => {
+
+  let userId = req.cookies["user_id"];
 
   // Check whether the provided short URL matches anything from the database.
   let match = 0;
@@ -88,7 +91,7 @@ app.get("/urls/:id", (req, res) => {
   // If there is a match, redirect.
   if (match) {
     let templateVars = { urls: urlDatabase, shortURL: req.params.id,
-      users: users, username: req.cookies["username"] };
+      users: users, user: users[userId] };
     res.render("urls_show", templateVars);
 
   // If there is no match, display error.
@@ -122,34 +125,34 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  let templateVars = { username: req.cookies["username"], users: users,
+  let userId = req.cookies["user_id"];
+  let templateVars = { users: users, user: users[userId],
     email: req.body.email, password: req.body.password }
   res.render("registration", templateVars);
 });
 
-// Clear username cookie.
+// Clear user_id cookie.
 app.post("/logout", (req, res) => {
-  let username = req.cookies["username"];
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
-// Add username for login via cookie.
+// Add user_id for login via cookie.
 app.post("/login", (req, res) => {
-  let username = req.body.username;
+  let userId = req.cookies["user_id"];
   let userMatch = 0;
   Object.keys(users).forEach(function(user) {
-    if (username === user) {
+    if (userId === user) {
       match++;
     }
   });
 
   if (match) {
-      res.cookie("username", username);
+      res.cookie("user_id", userId);
       res.redirect("/urls");
   }
 
-  // console.log(req.body.username);
+  // console.log(req.body.user_id);
 });
 
 /* Change the long URL associated with a given TinyURL
@@ -187,13 +190,13 @@ app.post("/register", (req, res) => {
       res.status(400);
       res.send("This email is already registered.");
       } else {
-        let username = generateRandomString();
-        users[username] = {
-          id: username,
+        let user_id = generateRandomString();
+        users[user_id] = {
+          id: user_id,
           email: email,
           password: password
         };
-        res.cookie("user_id", username);
+        res.cookie("user_id", user_id);
         // console.log(res.cookie);
         // console.log(users);
         res.redirect("/urls");
