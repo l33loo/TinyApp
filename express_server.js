@@ -49,6 +49,15 @@ app.get("/", (req, res) => {
   res.end("Hello!");
 });
 
+// Access login page
+app.get("/login", (req, res) => {
+  let userID = req.body.user_id;
+  let password = req.body.password;
+  let templateVars = { urls: urlDatabase, users: users,
+    user: "purple", password: password };
+  res.render("login", templateVars);
+});
+
 // Access URL database in JSON format.
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -63,7 +72,7 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   let userId = req.cookies["user_id"];
   let templateVars = { urls: urlDatabase, users: users,
-    user: users[userId] };
+    user: users[userId].id };
   res.render("urls_index", templateVars);
 });
 
@@ -139,19 +148,22 @@ app.post("/logout", (req, res) => {
 
 // Add user_id for login via cookie.
 app.post("/login", (req, res) => {
-  let userId = req.cookies["user_id"];
+  let userId = req.body.user_id;
+  let password = req.body.password;
   let userMatch = 0;
   Object.keys(users).forEach(function(user) {
-    if (userId === user) {
-      match++;
+    if (userId === user && users[user].password === password) {
+      userMatch++;
     }
   });
 
-  if (match) {
+  if (userMatch) {
       res.cookie("user_id", userId);
       res.redirect("/urls");
+  } else {
+    res.status(400);
+    res.send("Wrong username/password combination. Try again.");
   }
-
   // console.log(req.body.user_id);
 });
 
@@ -190,13 +202,13 @@ app.post("/register", (req, res) => {
       res.status(400);
       res.send("This email is already registered.");
       } else {
-        let user_id = generateRandomString();
-        users[user_id] = {
-          id: user_id,
+        let userId = generateRandomString();
+        users[userId] = {
+          id: userId,
           email: email,
           password: password
         };
-        res.cookie("user_id", user_id);
+        res.cookie("user_id", userId);
         // console.log(res.cookie);
         // console.log(users);
         res.redirect("/urls");
