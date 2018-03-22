@@ -4,24 +4,9 @@
 
 <html lang="en">
   <header>
-    <p>The TinyApp -- logged in as <%= user %></p>
-    <% let match = 0 %>
-    <% Object.keys(users).forEach(function(usr) { %>
-      <% if (user === usr) { %>
-        <% match++; %>
-      <% } %>
-    <% }); %>
-    <% if (match) { %>
-      <form action="/logout" method="POST" style="margin:150">
-        <input type="submit" value="Logout">
-      </form>
-    <% } else { %>
-        <form action="/login" method="POST" style="margin:150">
-          <label for="username">Enter your username:</label>
-          <input id="username" type="text" name="username" style="width: 150px">
-          <input type="submit" value="Login">
-        </form>
-      <% } %>
+    <p>The TinyApp -- logged in as <%= user.toString() %></p>
+    <a href="/login">Login</a>
+    <a href="/register">Register</a>
   </header>
 
 
