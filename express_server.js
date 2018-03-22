@@ -6,7 +6,7 @@ var app = express();
 // Connect to my environment's default port. If that fails, use port 8080.
 var PORT = process.env.PORT || 8080;
 
-// Use ejs view engine.
+// Use ejs as view engine.
 app.set("view engine", "ejs");
 
 /* Add middleware that automatically parses forms and stores the result
@@ -48,7 +48,7 @@ app.get("/hello", (req, res) => {
 
 // Access URL directory webpage.
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  let templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 
@@ -73,7 +73,7 @@ app.get("/urls/:id", (req, res) => {
 
   // If there is a match, redirect.
   if (match) {
-    let templateVars = { urls: urlDatabase, shortURL: req.params.id };
+    let templateVars = { urls: urlDatabase, shortURL: req.params.id, username: req.cookies["username"] };
     res.render("urls_show", templateVars);
 
   // If there is no match, display error.
@@ -108,7 +108,8 @@ app.get("/u/:shortURL", (req, res) => {
 
 // Add username for login via cookie.
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
+  let username = req.cookies["username"];
+  res.cookie("username", username);
   res.redirect("/urls");
   // console.log(req.body.username);
 });
