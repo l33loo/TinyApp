@@ -137,12 +137,17 @@ app.post("/logout", (req, res) => {
 // Add username for login via cookie.
 app.post("/login", (req, res) => {
   let username = req.body.username;
+  let userMatch = 0;
   Object.keys(users).forEach(function(user) {
     if (username === user) {
-      res.cookie("username", username);
-      res.redirect("/urls");
+      match++;
     }
   });
+
+  if (match) {
+      res.cookie("username", username);
+      res.redirect("/urls");
+  }
 
   // console.log(req.body.username);
 });
@@ -172,19 +177,31 @@ app.post("/register", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
   if (email && password) {
-    let username = generateRandomString();
-    users[username] = {
-      id: username,
-      email: email,
-      password: password
-    };
-    res.cookie("user_id", username);
-    console.log(res.cookie);
-    console.log(users);
-    res.redirect("/urls");
+    let emailMatch = 0;
+    Object.keys(users).forEach(function(user) {
+      if (email === users[user].email) {
+        emailMatch++;
+      }
+    });
+    if (emailMatch) {
+      res.status(400);
+      res.send("This email is already registered.");
+      } else {
+        let username = generateRandomString();
+        users[username] = {
+          id: username,
+          email: email,
+          password: password
+        };
+        res.cookie("user_id", username);
+        // console.log(res.cookie);
+        // console.log(users);
+        res.redirect("/urls");
+        }
   } else {
-    res.statusCode(400);
-}
+    res.status(400);
+    res.send("You must enter a valid email and a password to register.");
+  }
 });
 
 // Add event listener to the selected port.
