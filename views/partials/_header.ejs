@@ -5,8 +5,18 @@
 <html lang="en">
   <header>
     <p>The TinyApp -- logged in as <%= username %></p>
-    <form action="/login" method="POST" style="margin:150">
-      <label for="username">Enter a username:</label>
-      <input id="username" type="text" name="username" style="width: 150px">
-      <input type="submit" value="Submit">
+    <% if (username) { %>
+      <form action="/logout" method="POST" style="margin:150">
+        <input type="submit" value="Logout">
+      </form>
+    <% } else { %>
+      <form action="/login" method="POST" style="margin:150">
+        <label for="username">Enter a username:</label>
+        <input id="username" type="text" name="username" style="width: 150px">
+        <input type="submit" value="Submit">
+      </form>
+    <% } %>
   </header>
+
+
+

@@ -106,6 +106,13 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
+// Clear username cookie.
+app.post("/logout", (req, res) => {
+  let username = req.cookies["username"];
+  res.clearCookie("username");
+  res.redirect("/urls");
+});
+
 // Add username for login via cookie.
 app.post("/login", (req, res) => {
   let username = req.cookies["username"];
