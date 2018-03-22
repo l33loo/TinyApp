@@ -21,6 +21,19 @@ var urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  "l33loo": {
+    id: "l33loo",
+    email: "l33loo@l33loo.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+}
+
 // Generate a random short URL.
 function generateRandomString() {
   let randomStr = "";
@@ -48,7 +61,8 @@ app.get("/hello", (req, res) => {
 
 // Access URL directory webpage.
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  let templateVars = { urls: urlDatabase, users: users,
+    username: req.body.username };
   res.render("urls_index", templateVars);
 });
 
@@ -73,7 +87,8 @@ app.get("/urls/:id", (req, res) => {
 
   // If there is a match, redirect.
   if (match) {
-    let templateVars = { urls: urlDatabase, shortURL: req.params.id, username: req.cookies["username"] };
+    let templateVars = { urls: urlDatabase, shortURL: req.params.id,
+      users: users, username: req.cookies["username"] };
     res.render("urls_show", templateVars);
 
   // If there is no match, display error.
@@ -106,6 +121,12 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
+app.get("/register", (req, res) => {
+  let templateVars = { username: req.cookies["username"], users: users,
+    email: req.body.email, password: req.body.password }
+  res.render("registration", templateVars);
+});
+
 // Clear username cookie.
 app.post("/logout", (req, res) => {
   let username = req.cookies["username"];
@@ -115,9 +136,14 @@ app.post("/logout", (req, res) => {
 
 // Add username for login via cookie.
 app.post("/login", (req, res) => {
-  let username = req.cookies["username"];
-  res.cookie("username", username);
-  res.redirect("/urls");
+  let username = req.body.username;
+  Object.keys(users).forEach(function(user) {
+    if (username === user) {
+      res.cookie("username", username);
+      res.redirect("/urls");
+    }
+  });
+
   // console.log(req.body.username);
 });
 
@@ -138,6 +164,19 @@ app.post("/urls", (req, res) => {
 // Delete a given short URL.
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
+  res.redirect("/urls");
+});
+
+app.post("/register", (req, res) => {
+  let username = generateRandomString();
+  users[username] = {
+    id: username,
+    email: req.body.email,
+    password: req.body.password
+  };
+  res.cookie("user_id", username);
+  console.log(res.cookie);
+  console.log(users);
   res.redirect("/urls");
 });
 
