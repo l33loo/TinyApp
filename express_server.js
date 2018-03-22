@@ -167,17 +167,24 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
+// Registration handler.
 app.post("/register", (req, res) => {
-  let username = generateRandomString();
-  users[username] = {
-    id: username,
-    email: req.body.email,
-    password: req.body.password
-  };
-  res.cookie("user_id", username);
-  console.log(res.cookie);
-  console.log(users);
-  res.redirect("/urls");
+  let email = req.body.email;
+  let password = req.body.password;
+  if (email && password) {
+    let username = generateRandomString();
+    users[username] = {
+      id: username,
+      email: email,
+      password: password
+    };
+    res.cookie("user_id", username);
+    console.log(res.cookie);
+    console.log(users);
+    res.redirect("/urls");
+  } else {
+    res.statusCode(400);
+}
 });
 
 // Add event listener to the selected port.
