@@ -4,9 +4,17 @@
 
 <html lang="en">
   <header>
-    <p>The TinyApp -- logged in as <%= user.toString() %></p>
-    <a href="/login">Login</a>
-    <a href="/register">Register</a>
+  <% if (user) { %>
+    <h1>The TinyApp </h1>
+    <h3> Logged in as <%= user %><h3>
+    <form action="/logout" method="POST" style="margin:150px;">
+      <input type="submit" value="Logout">
+    </form>
+  <% } else { %>
+    <h1>The TinyApp </h1>
+    <h3><div><a href="/login">Login</a></div>
+    <div><a href="/register">Register</a></div></h3>
+  <% } %>
   </header>
 
 

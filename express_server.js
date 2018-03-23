@@ -25,7 +25,7 @@ const users = {
   "l33loo": {
     id: "l33loo",
     email: "l33loo@l33loo.com",
-    password: "purple-monkey-dinosaur"
+    password: "purple"
   },
   "user2RandomID": {
     id: "user2RandomID",
@@ -44,18 +44,13 @@ function generateRandomString() {
   return randomStr;
 }
 
-// Access home page.
+
+
+
+
+// HOME PAGE
 app.get("/", (req, res) => {
   res.end("Hello!");
-});
-
-// Access login page
-app.get("/login", (req, res) => {
-  let userID = req.body.user_id;
-  let password = req.body.password;
-  let templateVars = { urls: urlDatabase, users: users,
-    user: "purple", password: password };
-  res.render("login", templateVars);
 });
 
 // Access URL database in JSON format.
@@ -63,37 +58,129 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-// Access Hello page.
-app.get("/hello", (req, res) => {
-  res.end("<html><body>Hello <b>World</b></body></html>\n");
+
+// REGISTER
+app.get("/register", (req, res) => {
+  let userId = req.cookies["user_id"];
+  let templateVars = { users: users, user: users[userId],
+    email: req.body.email, password: req.body.password }
+  res.render("registration", templateVars);
 });
 
-// Access URL directory webpage.
+// Registration handler.
+app.post("/register", (req, res) => {
+  let email = req.body.email;
+  let password = req.body.password;
+  if (email && password) {
+    let emailMatch = 0;
+    Object.keys(users).forEach(function(user) {
+      if (email === users[user].email) {
+        emailMatch++;
+      }
+    });
+    if (emailMatch) {
+      res.status(400);
+      res.send("This email is already registered.");
+      } else {
+        let user_id = generateRandomString();
+        users[user_id] = {
+          id: user_id,
+          email: email,
+          password: password
+        };
+        res.cookie("user_id", user_id);
+        // console.log(res.cookie);
+        // console.log(users);
+        res.redirect("/urls");
+        }
+  } else {
+    res.status(400);
+    res.send("You must enter a valid email and a password to register.");
+  }
+});
+
+
+
+
+// LOGIN PAGE
+app.get("/login", (req, res) => {
+  let userId = req.cookies["user_id"];
+  let templateVars = { urls: urlDatabase, users: users,
+    user: users[userId] };
+  res.render("login", templateVars);
+});
+
+// Add user_id for login via cookie.
+app.post("/login", (req, res) => {
+  let givenID = req.body.user;
+  let givenPassword = req.body.password
+  let userMatch = 0;
+  Object.keys(users).forEach(function(user) {
+    if (givenID === user && users[user].password === givenPassword) {
+      userMatch++;
+    }
+  });
+
+  if (userMatch) {
+      res.cookie("user_id", givenID);
+      res.redirect("/urls");
+  } else {
+    res.status(400);
+    res.send("Wrong username/password combination. Try again.");
+  }
+  // console.log(req.body.user_id);
+});
+
+// Clear user_id cookie.
+app.post("/logout", (req, res) => {
+  res.clearCookie("user_id");
+  res.redirect("/urls");
+});
+
+
+
+
+// URL DIRECTORY
 app.get("/urls", (req, res) => {
   let userId = req.cookies["user_id"];
   let templateVars = { urls: urlDatabase, users: users,
-    user: users[userId].id };
+    user: users[userId] };
   res.render("urls_index", templateVars);
 });
 
-// Access webpage where the user can create a new short URL.
+// Create a new short URL and update the URL database.
+app.post("/urls", (req, res) => {
+  let shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect("/urls/" + shortURL);
+});
+
+
+
+
+
+// NEW TINYURL
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-/* Access webpage that displays the long URL of a given short one
-(like a search engine). */
+
+
+
+
+
+// TINY URL
 app.get("/urls/:id", (req, res) => {
 
   let userId = req.cookies["user_id"];
 
   // Check whether the provided short URL matches anything from the database.
-  let match = 0;
+  let urlMatch = 0;
   Object.keys(urlDatabase).forEach(function(key) {
 
     // Check for match.
     if (key === req.params.id) {
-      match++;
+      urlMatch++;
     }
   });
 
@@ -108,6 +195,24 @@ app.get("/urls/:id", (req, res) => {
     res.end("<html><body>This TinyURL does not exist. Please try again.</body></html>\n");
   }
 });
+
+/* Change the long URL associated with a given TinyURL
+and update the URL database.*/
+app.post("/urls/:id", (req, res) => {
+  let shortURL = req.params.id;
+  urlDatabase[shortURL] = req.body.longURL;
+});
+
+// Delete a given short URL.
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls");
+});
+
+
+
+
+
 
 // Access webpage that redirects from short URL to the target website.
 app.get("/u/:shortURL", (req, res) => {
@@ -133,91 +238,11 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
-app.get("/register", (req, res) => {
-  let userId = req.cookies["user_id"];
-  let templateVars = { users: users, user: users[userId],
-    email: req.body.email, password: req.body.password }
-  res.render("registration", templateVars);
-});
 
-// Clear user_id cookie.
-app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
-  res.redirect("/urls");
-});
 
-// Add user_id for login via cookie.
-app.post("/login", (req, res) => {
-  let userId = req.body.user_id;
-  let password = req.body.password;
-  let userMatch = 0;
-  Object.keys(users).forEach(function(user) {
-    if (userId === user && users[user].password === password) {
-      userMatch++;
-    }
-  });
 
-  if (userMatch) {
-      res.cookie("user_id", userId);
-      res.redirect("/urls");
-  } else {
-    res.status(400);
-    res.send("Wrong username/password combination. Try again.");
-  }
-  // console.log(req.body.user_id);
-});
 
-/* Change the long URL associated with a given TinyURL
-and update the URL database.*/
-app.post("/urls/:id", (req, res) => {
-  let shortURL = req.params.id;
-  urlDatabase[shortURL] = req.body.longURL;
-});
 
-// Create a new short URL and update the URL database.
-app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect("/urls/" + shortURL);
-});
-
-// Delete a given short URL.
-app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect("/urls");
-});
-
-// Registration handler.
-app.post("/register", (req, res) => {
-  let email = req.body.email;
-  let password = req.body.password;
-  if (email && password) {
-    let emailMatch = 0;
-    Object.keys(users).forEach(function(user) {
-      if (email === users[user].email) {
-        emailMatch++;
-      }
-    });
-    if (emailMatch) {
-      res.status(400);
-      res.send("This email is already registered.");
-      } else {
-        let userId = generateRandomString();
-        users[userId] = {
-          id: userId,
-          email: email,
-          password: password
-        };
-        res.cookie("user_id", userId);
-        // console.log(res.cookie);
-        // console.log(users);
-        res.redirect("/urls");
-        }
-  } else {
-    res.status(400);
-    res.send("You must enter a valid email and a password to register.");
-  }
-});
 
 // Add event listener to the selected port.
 app.listen(PORT, () => {
