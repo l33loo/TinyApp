@@ -118,19 +118,16 @@ app.post("/login", (req, res) => {
   });
 
   if (userMatch) {
-      res.cookie("user_id", givenID);
-      res.redirect("/");
+      res.cookie("user_id", givenID).redirect("/");
   } else {
-    res.status(403);
-    res.send("Wrong username/password combination. Try again.");
+    res.status(403).send("Wrong username/password combination. Try again.");
   }
   // console.log(req.body.user_id);
 });
 
 // Clear user_id cookie.
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
-  res.redirect("/login");
+  res.clearCookie("user_id").redirect("/login");
 });
 
 
@@ -155,9 +152,17 @@ app.post("/urls", (req, res) => {
 
 
 
+
 // NEW TINYURL
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  let userId = req.cookies["user_id"];
+  if (userId) {
+    let templateVars = { urls: urlDatabase, users: users,
+      user: users[userId].id };
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login")
+  }
 });
 
 
