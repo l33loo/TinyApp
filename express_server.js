@@ -226,7 +226,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 
 
-// Access webpage that redirects from short URL to the target website.
+// REDIRECT from TinyURL to target website. Accessible to anyone.
 app.get("/u/:shortURL", (req, res) => {
 
   // Check whether the provided short URL matches anything from the database.
