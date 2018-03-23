@@ -51,7 +51,18 @@ function generateRandomString() {
   return randomStr;
 }
 
-
+// Render only user's TinyURLs
+function urlsForUser(id) {
+  let userUrlDatabase = new Object();
+  if (urlDatabase) {
+    Object.keys(urlDatabase).forEach(function(tinyUrl){
+      if (id === urlDatabase[tinyUrl].userID) {
+        userUrlDatabase[tinyUrl] = urlDatabase[tinyUrl].url;
+      }
+    });
+  }
+  return userUrlDatabase;
+}
 
 
 
@@ -144,7 +155,9 @@ app.post("/logout", (req, res) => {
 app.get("/urls", (req, res) => {
   if (req.cookies["user_id"]) {
     let userId = req.cookies["user_id"];
-    let templateVars = { urls: urlDatabase, users: users,
+    let database = urlsForUser(userId);
+    console.log(database);
+    let templateVars = { urls: database, users: users,
       user: users[userId].id };
     res.render("urls_index", templateVars);
   } else {
