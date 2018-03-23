@@ -142,10 +142,14 @@ app.post("/logout", (req, res) => {
 
 // URL DIRECTORY
 app.get("/urls", (req, res) => {
-  let userId = req.cookies["user_id"];
-  let templateVars = { urls: urlDatabase, users: users,
-    user: users[userId].id };
-  res.render("urls_index", templateVars);
+  if (req.cookies["user_id"]) {
+    let userId = req.cookies["user_id"];
+    let templateVars = { urls: urlDatabase, users: users,
+      user: users[userId].id };
+    res.render("urls_index", templateVars);
+  } else {
+    res.redirect("/login");
+  }
 });
 
 // Create a new short URL and update the URL database.
