@@ -61,8 +61,7 @@ app.get("/urls.json", (req, res) => {
 
 // REGISTER
 app.get("/register", (req, res) => {
-  let userId = req.cookies["user_id"];
-  let templateVars = { users: users, user: users[userId],
+  let templateVars = { users: users, user: undefined,
     email: req.body.email, password: req.body.password }
   res.render("registration", templateVars);
 });
@@ -104,9 +103,8 @@ app.post("/register", (req, res) => {
 
 // LOGIN PAGE
 app.get("/login", (req, res) => {
-  let userId = req.cookies["user_id"];
   let templateVars = { urls: urlDatabase, users: users,
-    user: users[userId] };
+    user: undefined };
   res.render("login", templateVars);
 });
 
@@ -134,7 +132,7 @@ app.post("/login", (req, res) => {
 // Clear user_id cookie.
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 
@@ -144,7 +142,7 @@ app.post("/logout", (req, res) => {
 app.get("/urls", (req, res) => {
   let userId = req.cookies["user_id"];
   let templateVars = { urls: urlDatabase, users: users,
-    user: users[userId] };
+    user: users[userId].id };
   res.render("urls_index", templateVars);
 });
 
@@ -187,7 +185,7 @@ app.get("/urls/:id", (req, res) => {
   // If there is a match, redirect.
   if (match) {
     let templateVars = { urls: urlDatabase, shortURL: req.params.id,
-      users: users, user: users[userId] };
+      users: users, user: users[userId].id };
     res.render("urls_show", templateVars);
 
   // If there is no match, display error.
