@@ -10,7 +10,7 @@
   <body>
     <p>ShortURL: <%= shortURL %></p>
     <form action="/urls/<%= shortURL %>" method="POST" style="margin:150px">
-      <input id="longURL" type="text" name="longURL" value=<%= urls[shortURL] %>
+      <input id="longURL" type="text" name="longURL" value=<%= urls[shortURL].url %>
       style="width: 300px">
       <input type="submit" value="Update">
     </form>

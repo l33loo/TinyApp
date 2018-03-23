@@ -15,12 +15,6 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(cookieParser());
 
-// Database of URL pairs.
-var urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
-
 const users = {
   "l33loo": {
     id: "l33loo",
@@ -31,6 +25,19 @@ const users = {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "dishwasher-funk"
+  }
+}
+
+// Database of URL pairs.
+const urlDatabase = {
+
+  "b2xVn2": {
+    userID: "l33loo",
+    url: "http://www.lighthouselabs.ca",
+  },
+  "9sm5xK": {
+    userID: "user2RandomID",
+    url: "http://www.google.com"
   }
 }
 
@@ -186,7 +193,7 @@ app.get("/urls/:id", (req, res) => {
   });
 
   // If there is a match, redirect.
-  if (match) {
+  if (urlMatch) {
     let templateVars = { urls: urlDatabase, shortURL: req.params.id,
       users: users, user: users[userId].id };
     res.render("urls_show", templateVars);
@@ -197,14 +204,14 @@ app.get("/urls/:id", (req, res) => {
   }
 });
 
-/* Change the long URL associated with a given TinyURL
+/* EDIT the long URL associated with a given TinyURL
 and update the URL database.*/
 app.post("/urls/:id", (req, res) => {
   let shortURL = req.params.id;
   urlDatabase[shortURL] = req.body.longURL;
 });
 
-// Delete a given short URL.
+// DELETE a given short URL.
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
