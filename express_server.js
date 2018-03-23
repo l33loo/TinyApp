@@ -201,10 +201,10 @@ app.get("/urls/:id", (req, res) => {
 
   // Check whether the provided short URL matches anything from the database.
   let urlMatch = 0;
-  Object.keys(urlDatabase).forEach(function(key) {
+  Object.keys(urlDatabase).forEach(function(tinyURL) {
 
     // Check for match.
-    if (key === req.params.id) {
+    if (tinyURL === req.params.id) {
       urlMatch++;
     }
   });
@@ -244,17 +244,17 @@ app.get("/u/:shortURL", (req, res) => {
 
   // Check whether the provided short URL matches anything from the database.
   let match = 0;
-  Object.keys(urlDatabase).forEach(function(key) {
+  Object.keys(urlDatabase).forEach(function(tinyURL) {
 
     // Check for a match.
-    if (key === req.params.shortURL) {
+    if (tinyURL === req.params.shortURL) {
       match++;
     }
   });
 
   // If there is a match, redirect.
   if (match) {
-    let longURL = urlDatabase[req.params.shortURL];
+    let longURL = urlDatabase[req.params.shortURL].url;
     res.redirect(longURL);
 
   // If there is no match, display error.
