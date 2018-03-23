@@ -88,8 +88,6 @@ app.post("/register", (req, res) => {
           password: password
         };
         res.cookie("user_id", user_id);
-        // console.log(res.cookie);
-        // console.log(users);
         res.redirect("/urls");
         }
   } else {
@@ -121,9 +119,9 @@ app.post("/login", (req, res) => {
 
   if (userMatch) {
       res.cookie("user_id", givenID);
-      res.redirect("/urls");
+      res.redirect("/");
   } else {
-    res.status(400);
+    res.status(403);
     res.send("Wrong username/password combination. Try again.");
   }
   // console.log(req.body.user_id);
