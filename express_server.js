@@ -1,6 +1,7 @@
 var express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
+const bcrypt = require('bcrypt');
 var app = express();
 
 // Connect to my environment's default port. If that fails, use port 8080.
@@ -13,7 +14,10 @@ app.set("view engine", "ejs");
 as a dictionary (object) in req.body. */
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: []
+}));
 
 const users = {
   "l33loo": {
@@ -79,15 +83,20 @@ app.get("/urls.json", (req, res) => {
 
 // REGISTER
 app.get("/register", (req, res) => {
-  let templateVars = { users: users, user: undefined,
-    email: req.body.email, password: req.body.password }
+  let templateVars = {
+    users: users,
+    user: undefined,
+    email: req.body.email,
+    password: req.body.password
+  }
   res.render("registration", templateVars);
 });
 
 // Registration handler.
 app.post("/register", (req, res) => {
-  let email = req.body.email;
-  let password = req.body.password;
+  const email = req.body.email;
+  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   if (email && password) {
     let emailMatch = 0;
     Object.keys(users).forEach(function(user) {
@@ -103,15 +112,16 @@ app.post("/register", (req, res) => {
         users[user_id] = {
           id: user_id,
           email: email,
-          password: password
+          password: hashedPassword
         };
-        res.cookie("user_id", user_id);
+        req.sessioin.user_id = user_id;
         res.redirect("/urls");
         }
   } else {
     res.status(400);
     res.send("You must enter a valid email and a password to register.");
   }
+  console.log(users);
 });
 
 
@@ -130,13 +140,14 @@ app.post("/login", (req, res) => {
   let givenPassword = req.body.password
   let userMatch = 0;
   Object.keys(users).forEach(function(user) {
-    if (givenID === user && users[user].password === givenPassword) {
+    if (givenID === user && bcrypt.compareSync(givenPassword, users[user].password)) {
       userMatch++;
     }
   });
 
   if (userMatch) {
-      res.cookie("user_id", givenID).redirect("/");
+      req.session.user_id = givenID;
+      res.redirect("/");
   } else {
     res.status(403).send("Wrong username/password combination. Try again.");
   }
@@ -153,10 +164,10 @@ app.post("/logout", (req, res) => {
 
 // URL DIRECTORY
 app.get("/urls", (req, res) => {
-  if (req.cookies["user_id"]) {
-    let userId = req.cookies["user_id"];
+  if (req.session.user_id) {
+    let userId = req.session.user_id;
     let database = urlsForUser(userId);
-    console.log(database);
+    // console.log(da÷tabase);
     let templateVars = { urls: database, users: users,
       user: users[userId].id };
     res.render("urls_index", templateVars);
@@ -179,7 +190,7 @@ app.post("/urls", (req, res) => {
 
 // NEW TINYURL
 app.get("/urls/new", (req, res) => {
-  let userId = req.cookies["user_id"];
+  let userId = req.session.user_id;
   if (userId) {
     let templateVars = { urls: urlDatabase, users: users,
       user: users[userId].id };
@@ -197,7 +208,7 @@ app.get("/urls/new", (req, res) => {
 // TINY URL
 app.get("/urls/:id", (req, res) => {
 
-  let userId = req.cookies["user_id"];
+  let userId = req.session.user_id;
 
   // Check whether the provided short URL matches anything from the database.
   let urlMatch = 0;
