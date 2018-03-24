@@ -4,7 +4,7 @@ const cookieSession = require("cookie-session");
 const bcrypt = require('bcrypt');
 const app = express();
 
-var PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8080;
 
 app.set("view engine", "ejs");
 
@@ -47,7 +47,7 @@ const urlDatabase = {
 // Generate a random TinyURL.
 function generateRandomString() {
   let randomStr = "";
-  let possibleChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const possibleChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (let i = 0; i < 6; i++) {
     randomStr += possibleChar.charAt(Math.floor(Math.random() * possibleChar.length));
   }
@@ -56,7 +56,7 @@ function generateRandomString() {
 
 // Return a database of user's own TinyURLs.
 function urlsForUser(id) {
-  let userUrlDatabase = new Object();
+  const userUrlDatabase = new Object();
   if (urlDatabase) {
     Object.keys(urlDatabase).forEach(function(tinyUrl){
       if (id === urlDatabase[tinyUrl].userID) {
@@ -106,7 +106,7 @@ app.post("/register", (req, res) => {
     if (emailMatch) {
       res.status(400).send(`<html><body>This email is already registered. Please <a href="/login">login</a>.</body></html>\n`);
     } else {
-      let user_id = generateRandomString();
+      const user_id = generateRandomString();
       const hashedPassword = bcrypt.hashSync(password, 10);
       users[user_id] = {
         id: user_id,
@@ -126,7 +126,7 @@ app.get("/login", (req, res) => {
   if (req.session.user_id) {
     res.redirect("/");
   } else {
-    let templateVars = {
+    const templateVars = {
                           urls: urlDatabase,
                           users: users,
                           user: undefined
@@ -137,8 +137,8 @@ app.get("/login", (req, res) => {
 
 // Login handler.
 app.post("/login", (req, res) => {
-  let givenID = req.body.user;
-  let givenPassword = req.body.password;
+  const givenID = req.body.user;
+  const givenPassword = req.body.password;
 
   // Compare username and password (encrypted or unencrypted) against database.
   let userMatch = 0;
@@ -169,10 +169,13 @@ app.post("/logout", (req, res) => {
 // USER'S URL DIRECTORY
 app.get("/urls", (req, res) => {
   if (req.session.user_id) {
-    let userId = req.session.user_id;
-    let database = urlsForUser(userId);
-    let templateVars = { urls: database, users: users,
-      user: userId };
+    const userId = req.session.user_id;
+    const database = urlsForUser(userId);
+    const templateVars = {
+                            urls: database,
+                            users: users,
+                            user: userId
+                          };
     res.render("urls_index", templateVars);
   } else {
     res.status(401).send(`<html><body>Access denied. Please <a href="/login">login</a> or <a href="/register">register</a> to access this page.</body></html>\n`);
@@ -182,8 +185,8 @@ app.get("/urls", (req, res) => {
 // CREATE A NEW TinyURL
 app.get("/urls/new", (req, res) => {
   if (req.session.user_id) {
-    let userId = req.session.user_id;
-    let templateVars = {
+    const userId = req.session.user_id;
+    const templateVars = {
                           urls: urlDatabase,
                           users: users,
                           user: userId
@@ -197,8 +200,8 @@ app.get("/urls/new", (req, res) => {
 // Handler for new TinyURLs
 app.post("/urls/new", (req, res) => {
   if (req.session.user_id) {
-    let userId = req.session.user_id;
-    let shortURL = generateRandomString();
+    const userId = req.session.user_id;
+    const shortURL = generateRandomString();
     urlDatabase[shortURL] = {
                               url: req.body.longURL,
                               userID: userId
@@ -212,7 +215,7 @@ app.post("/urls/new", (req, res) => {
 // TINY URL DASHBOARD (for a given TinyURL)
 app.get("/urls/:id", (req, res) => {
   if (req.session.user_id) {
-    let userId = req.session.user_id;
+    const userId = req.session.user_id;
 
     // Check whether the provided TinyURL matches anything from the database.
     let urlMatch = 0;
@@ -231,7 +234,7 @@ app.get("/urls/:id", (req, res) => {
 
       // If assigned to the user, render page.
       if (userMatch) {
-        let templateVars = {
+        const templateVars = {
                               urls: urlDatabase,
                               shortURL: req.params.id,
                               users: users,
@@ -259,8 +262,8 @@ app.get("/urls/:id", (req, res) => {
 and update the URL database.*/
 app.post("/urls/:id", (req, res) => {
   if (req.session.user_id) {
-    let userId = req.session.user_id;
-    let shortURL = req.params.id;
+    const userId = req.session.user_id;
+    const shortURL = req.params.id;
 
     // Check whether logged-in user owns the TinyURL.
     userMatch = 0;
@@ -282,7 +285,7 @@ app.post("/urls/:id", (req, res) => {
 // DELETE a given TinyURL.
 app.post("/urls/:id/delete", (req, res) => {
   if (req.session.user_id) {
-    let userId = req.session.user_id;
+    const userId = req.session.user_id;
 
     // Allow to delete the TinyURL if assigned to the logged-in user.
     userMatch = 0;
@@ -315,7 +318,7 @@ app.get("/u/:shortURL", (req, res) => {
 
   // If there is a match, redirect.
   if (match) {
-    let longURL = urlDatabase[req.params.shortURL].url;
+    const longURL = urlDatabase[req.params.shortURL].url;
     res.redirect(longURL);
 
   // If there is no match, display error.
