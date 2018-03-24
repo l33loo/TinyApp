@@ -67,6 +67,24 @@ function urlsForUser(id) {
   return userUrlDatabase;
 }
 
+function matchUser(id, url) {
+  userMatch = 0;
+  if (id === urlDatabase[url].userID) {
+      userMatch++;
+  }
+  return userMatch;
+}
+
+function matchTinyURL(url) {
+  let urlMatch = 0;
+  Object.keys(urlDatabase).forEach(function(tinyURL) {
+    if (tinyURL === url) {
+      urlMatch++;
+    }
+  });
+  return urlMatch;
+}
+
 // HOME PAGE
 app.get("/", (req, res) => {
   if (req.session.user_id) {
@@ -218,22 +236,13 @@ app.get("/urls/:id", (req, res) => {
     const userId = req.session.user_id;
 
     // Check whether the provided TinyURL matches anything from the database.
-    let urlMatch = 0;
-    Object.keys(urlDatabase).forEach(function(tinyURL) {
-      if (tinyURL === req.params.id) {
-        urlMatch++;
-      }
-    });
+
 
     // If there is a match, verify whether the TinyURL is assigned to the user.
-    if (urlMatch) {
-      userMatch = 0;
-      if (userId === urlDatabase[req.params.id].userID) {
-          userMatch++;
-      }
+    if (matchTinyURL(req.params.id)) {
 
       // If assigned to the user, render page.
-      if (userMatch) {
+      if (matchUser(userId, req.params.id)) {
         const templateVars = {
                               urls: urlDatabase,
                               shortURL: req.params.id,
@@ -266,11 +275,7 @@ app.post("/urls/:id", (req, res) => {
     const shortURL = req.params.id;
 
     // Check whether logged-in user owns the TinyURL.
-    userMatch = 0;
-    if (userId === urlDatabase[shortURL].userID) {
-        userMatch++;
-    }
-    if (userMatch) {
+    if (matchUser(userId, req.params.id)) {
       urlDatabase[shortURL].url = req.body.longURL;
       res.redirect("/urls");
     } else {
@@ -288,11 +293,7 @@ app.post("/urls/:id/delete", (req, res) => {
     const userId = req.session.user_id;
 
     // Allow to delete the TinyURL if assigned to the logged-in user.
-    userMatch = 0;
-    if (userId === urlDatabase[req.params.id].userID) {
-        userMatch++;
-    }
-    if (userMatch) {
+    if (matchUser(userId, req.params.id)) {
       delete urlDatabase[req.params.id];
       res.redirect("/urls");
     } else {
@@ -307,17 +308,17 @@ app.post("/urls/:id/delete", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
 
   // Check whether the provided short URL matches anything from the database.
-  let match = 0;
+  let matchUrl = 0;
   Object.keys(urlDatabase).forEach(function(tinyURL) {
 
     // Check for a match.
     if (tinyURL === req.params.shortURL) {
-      match++;
+      matchUrl++;
     }
   });
 
   // If there is a match, redirect.
-  if (match) {
+  if (matchUrl) {
     const longURL = urlDatabase[req.params.shortURL].url;
     res.redirect(longURL);
 
