@@ -1,13 +1,11 @@
-var express = require("express");
+const express = require("express");
 const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
 const bcrypt = require('bcrypt');
-var app = express();
+const app = express();
 
-// Connect to my environment's default port. If that fails, use port 8080.
 var PORT = process.env.PORT || 8080;
 
-// Use ejs as view engine.
 app.set("view engine", "ejs");
 
 /* Add middleware that automatically parses forms and stores the result
@@ -15,10 +13,11 @@ as a dictionary (object) in req.body. */
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(cookieSession({
-  name: 'session',
-  keys: []
+  name: "session",
+  secret: "fujlsispogksdjg"
 }));
 
+// Database of users.
 const users = {
   "l33loo": {
     id: "l33loo",
@@ -28,11 +27,11 @@ const users = {
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: "dishwasher"
   }
 }
 
-// Database of URL pairs.
+// Database of TinyURL-longURL pairs.
 const urlDatabase = {
 
   "b2xVn2": {
@@ -45,7 +44,7 @@ const urlDatabase = {
   }
 }
 
-// Generate a random short URL.
+// Generate a random TinyURL.
 function generateRandomString() {
   let randomStr = "";
   let possibleChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -55,7 +54,7 @@ function generateRandomString() {
   return randomStr;
 }
 
-// Render only user's TinyURLs
+// Return a database of user's own TinyURLs.
 function urlsForUser(id) {
   let userUrlDatabase = new Object();
   if (urlDatabase) {
@@ -68,28 +67,29 @@ function urlsForUser(id) {
   return userUrlDatabase;
 }
 
-
-
 // HOME PAGE
 app.get("/", (req, res) => {
-  res.end("Hello!");
-});
-
-// Access URL database in JSON format.
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-
-// REGISTER
-app.get("/register", (req, res) => {
-  let templateVars = {
-    users: users,
-    user: undefined,
-    email: req.body.email,
-    password: req.body.password
+  if (req.session.user_id) {
+    res.redirect("/urls");
+  } else {
+    res.redirect("/login");
   }
-  res.render("registration", templateVars);
+});
+
+
+// REGISTRATION PAGE
+app.get("/register", (req, res) => {
+  if (req.session.user_id) {
+    res.redirect("/urls");
+  } else {
+    let templateVars = {
+                          users: users,
+                          user: undefined,
+                          email: req.body.email,
+                          password: req.body.password
+                        }
+    res.render("registration", templateVars);
+  }
 });
 
 // Registration handler.
@@ -106,151 +106,203 @@ app.post("/register", (req, res) => {
     });
     if (emailMatch) {
       res.status(400);
-      res.send("This email is already registered.");
-      } else {
-        let user_id = generateRandomString();
-        users[user_id] = {
-          id: user_id,
-          email: email,
-          password: hashedPassword
-        };
-        req.sessioin.user_id = user_id;
-        res.redirect("/urls");
-        }
+      res.send(`<html><body>This email is already registered. Please <a href="/login">login</a>.</body></html>\n`);
+    } else {
+      let user_id = generateRandomString();
+      users[user_id] = {
+        id: user_id,
+        email: email,
+        password: hashedPassword
+      };
+      req.session.user_id = user_id;
+      res.redirect("/urls");
+    }
   } else {
-    res.status(400);
-    res.send("You must enter a valid email and a password to register.");
+    res.status(400).send(`<html><body>You must enter a valid email and a password to register. <a href="/register">Try again.</a></body></html>\n`);
   }
-  console.log(users);
 });
-
-
-
 
 // LOGIN PAGE
 app.get("/login", (req, res) => {
-  let templateVars = { urls: urlDatabase, users: users,
-    user: undefined };
-  res.render("login", templateVars);
+  if (req.session.user_id) {
+    res.redirect("/");
+  } else {
+    let templateVars = {
+                          urls: urlDatabase,
+                          users: users,
+                          user: undefined
+                        };
+    res.render("login", templateVars);
+}
 });
 
-// Add user_id for login via cookie.
+// Login handler.
 app.post("/login", (req, res) => {
   let givenID = req.body.user;
-  let givenPassword = req.body.password
+  let givenPassword = req.body.password;
+
+  // Compare username and password (encrypted or unencrypted) against database.
   let userMatch = 0;
   Object.keys(users).forEach(function(user) {
-    if (givenID === user && bcrypt.compareSync(givenPassword, users[user].password)) {
+    if (givenID === users[user].id && (givenPassword === users[user].password ||
+        bcrypt.compareSync(givenPassword, users[user].password))) {
       userMatch++;
     }
   });
 
+  // If match:
   if (userMatch) {
-      req.session.user_id = givenID;
-      res.redirect("/");
+    req.session.user_id = givenID;
+    res.redirect("/");
+
+  // If no match:
   } else {
-    res.status(403).send("Wrong username/password combination. Try again.");
+    res.status(403).send(`<html><body>Wrong username/password combination. <a href="/login">Try again</a>.</body></html>\n`);
   }
-  // console.log(req.body.user_id);
 });
 
-// Clear user_id cookie.
+// LOGOUT -- Clear session cookie.
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id").redirect("/login");
+  if (req.session.user_id) {
+    req.session.user_id = null;
+    res.redirect("/login");
+  } else {
+    res.status(401).send("<html><body>Access denied.</body></html>\n");
+  }
 });
 
-
-
-
-// URL DIRECTORY
+// USER'S URL DIRECTORY
 app.get("/urls", (req, res) => {
   if (req.session.user_id) {
     let userId = req.session.user_id;
     let database = urlsForUser(userId);
-    // console.log(da÷tabase);
     let templateVars = { urls: database, users: users,
-      user: users[userId].id };
+      user: userId };
     res.render("urls_index", templateVars);
   } else {
-    res.redirect("/login");
+    res.status(401).send(`<html><body>Access denied. Please <a href="/login">login</a> or <a href="/register">register</a> to access this page.</body></html>\n`);
   }
 });
 
-// Create a new short URL and update the URL database.
-app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect("/urls/" + shortURL);
-});
-
-
-
-
-
-
-// NEW TINYURL
+// CREATE A NEW TinyURL
 app.get("/urls/new", (req, res) => {
-  let userId = req.session.user_id;
-  if (userId) {
-    let templateVars = { urls: urlDatabase, users: users,
-      user: users[userId].id };
+  if (req.session.user_id) {
+    let userId = req.session.user_id;
+    let templateVars = {
+                          urls: urlDatabase,
+                          users: users,
+                          user: userId
+                        };
     res.render("urls_new", templateVars);
   } else {
     res.redirect("/login")
   }
 });
 
-
-
-
-
-
-// TINY URL
-app.get("/urls/:id", (req, res) => {
-
-  let userId = req.session.user_id;
-
-  // Check whether the provided short URL matches anything from the database.
-  let urlMatch = 0;
-  Object.keys(urlDatabase).forEach(function(tinyURL) {
-
-    // Check for match.
-    if (tinyURL === req.params.id) {
-      urlMatch++;
-    }
-  });
-
-  // If there is a match, redirect.
-  if (urlMatch) {
-    let templateVars = { urls: urlDatabase, shortURL: req.params.id,
-      users: users, user: users[userId].id };
-    res.render("urls_show", templateVars);
-
-  // If there is no match, display error.
+// Handler for new TinyURLs
+app.post("/urls/new", (req, res) => {
+  if (req.session.user_id) {
+    let userId = req.session.user_id;
+    let shortURL = generateRandomString();
+    urlDatabase[shortURL] = {
+                              url: req.body.longURL,
+                              userID: userId
+                            };
+    res.redirect("/urls/" + shortURL);
   } else {
-    res.end("<html><body>This TinyURL does not exist. Please try again.</body></html>\n");
+    res.status(401).send(`<html><body>Access denied. Please <a href="/login">login</a> or <a href="/register">register</a> to access this page.</body></html>\n`);
+  }
+});
+
+// TINY URL DASHBOARD (for a given TinyURL)
+app.get("/urls/:id", (req, res) => {
+  if (req.session.user_id) {
+    let userId = req.session.user_id;
+
+    // Check whether the provided TinyURL matches anything from the database.
+    let urlMatch = 0;
+    Object.keys(urlDatabase).forEach(function(tinyURL) {
+      if (tinyURL === req.params.id) {
+        urlMatch++;
+      }
+    });
+
+    // If there is a match, verify whether the TinyURL is assigned to the user.
+    if (urlMatch) {
+      userMatch = 0;
+      if (userId === urlDatabase[req.params.id].userID) {
+          userMatch++;
+      }
+
+      // If assigned to the user, render page.
+      if (userMatch) {
+        let templateVars = {
+                              urls: urlDatabase,
+                              shortURL: req.params.id,
+                              users: users,
+                              user: userId
+                            };
+        res.render("urls_show", templateVars);
+
+      // If not assigned to the user:
+      } else {
+        res.status(403).send(`<html><body>Forbidden. You do not own this TinyURL.</body></html>\n`);
+      }
+
+    // If the TinyURL does not exist:
+    } else {
+      res.status(404).send("<html><body>This TinyURL does not exist. Please try again.</body></html>\n");
+    }
+
+  // If the user is not logged in:
+  } else {
+    res.status(401).send(`<html><body>Access denied. Please <a href="/login">login</a> or <a href="/register">register</a> to access this page.</body></html>\n`);
   }
 });
 
 /* EDIT the long URL associated with a given TinyURL
 and update the URL database.*/
 app.post("/urls/:id", (req, res) => {
-  let shortURL = req.params.id;
-  urlDatabase[shortURL] = req.body.longURL;
+  if (req.session.user_id) {
+    let userId = req.session.user_id;
+    let shortURL = req.params.id;
+    userMatch = 0;
+    if (userId === urlDatabase[shortURL].userID) {
+        userMatch++;
+    }
+    if (userMatch) {
+      urlDatabase[shortURL].url = req.body.longURL;
+      res.redirect("/urls");
+    } else {
+      res.status(403).send("Forbidden.\n");
+    }
+  } else {
+    res.status(401).send("Access denied.\n");
+  }
 });
 
-// DELETE a given short URL.
+// DELETE a given TinyURL.
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect("/urls");
+  if (req.session.user_id) {
+    let userId = req.session.user_id;
+
+    // Allow to delete the TinyURL if assigned to the logged-in user.
+    userMatch = 0;
+    if (userId === urlDatabase[req.params.id].userID) {
+        userMatch++;
+    }
+    if (userMatch) {
+      delete urlDatabase[req.params.id];
+      res.redirect("/urls");
+    } else {
+      res.status(403).send("Forbidden.\n");
+    }
+  } else {
+    res.status(401).send("Access denied.\n");
+  }
 });
 
-
-
-
-
-
-// REDIRECT from TinyURL to target website. Accessible to anyone.
+// REDIRECT FROM TinyURL TO TARGET WEBSITE. Accessible to all.
 app.get("/u/:shortURL", (req, res) => {
 
   // Check whether the provided short URL matches anything from the database.
@@ -270,15 +322,9 @@ app.get("/u/:shortURL", (req, res) => {
 
   // If there is no match, display error.
   } else {
-    res.end("<html><body>This TinyURL does not exist. Please try again.</body></html>\n");
+    res.status(404).send("<html><body>This TinyURL does not exist. Please try again.</body></html>\n");
   }
 });
-
-
-
-
-
-
 
 // Add event listener to the selected port.
 app.listen(PORT, () => {

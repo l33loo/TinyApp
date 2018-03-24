@@ -1,18 +1,17 @@
-<!- Page to display a gingle URL and its shortened form. ->
-
 <!DOCTYPE html>
 
 <html lang="en">
-  <% include ./partials/_header %>
   <head/>
-    <title>TinyApp URL Directory Search</title>
+    <title>TinyApp: <%= shortURL %></title>
   </head>
-  <body>
-    <p>ShortURL: <%= shortURL %></p>
-    <form action="/urls/<%= shortURL %>" method="POST" style="margin:150px">
-      <input id="longURL" type="text" name="longURL" value=<%= urls[shortURL].url %>
-      style="width: 300px">
-      <input type="submit" value="Update">
-    </form>
+  <body style="font-size:20px; padding:50px">
+    <% include ./partials/_header %>
+    <div style="margin:100px">
+      <form action="/urls/<%= shortURL %>" method="POST" style="margin:10px">
+        <label for="longURL">TinyURL: <%= shortURL %></label>
+        <input id="longURL" type="text" name="longURL" value=<%= urls[shortURL].url %> style="width: 300px">
+        <input type="submit" value="Update">
+      </form>
+    </div>
   </body>
 </html>

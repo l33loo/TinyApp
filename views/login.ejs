@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 
 <html lang="en">
-  <header>
-    <% include ./partials/_header %>
-  </header>
   <head>
-    <title>TinyApp URL Login</title>
+    <title>TinyApp: Login</title>
   </head>
-  <body style="font-size:20px; padding:50px;">
+  <body style="font-size:20px; padding:50px">
+    <% include ./partials/_header %>
     <% let match = 0 %>
     <% Object.keys(users).forEach(function(usr) { %>
       <% if (user === usr) { %>
@@ -15,11 +13,11 @@
       <% } %>
     <% }); %>
     <% if (match) { %>
-      <form action="/logout" method="POST" style="margin:150">
+      <form action="/logout" method="POST" style="margin:100px">
         <input type="submit" value="Logout">
       </form>
     <% } else { %>
-      <form action="/login" method="POST" style="margin:150">
+      <form action="/login" method="POST" style="margin:100px">
         <div><label for="user">Username:</label>
         <input id="user" type="text" name="user" style="width: 300px"></div>
         <div><label for="password">Password:</label>

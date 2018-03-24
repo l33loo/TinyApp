@@ -1,28 +1,26 @@
 <!DOCTYPE html>
 
-<!- Template to display all the URLs and their shortened forms. ->
-
 <html lang="en">
-  <header>
-    <% include ./partials/_header %>
-  </header>
   <head>
-    <title>TinyApp URL Directory</title>
+    <title>TinyApp: Directory</title>
   </head>
-  <body>
-    <p>This is the official directory of TinyApp URLs:</p>
-    <ul>
-      <% if (urls) {%>
-        <% Object.keys(urls).forEach(function(tinyURL) { %>
-            <li><%= urls[tinyURL] + " --> " + tinyURL; %>
-            <a href="/urls/<%= tinyURL %>">Edit</a>
-            <form method="POST" action="/urls/<%= tinyURL %>/delete">
-              <input type="submit" value="Delete">
-            </form></li>
-        <% }); %>
-      <% } %>
-    <ul>
-    <a href="http://localhost:8080/urls/new">Click here to create a TinyApp URL!</a>
+  <body style="font-size:20px; padding:50px">
+    <% include ./partials/_header %>
+    <div style="margin:100px">
+      <a href="http://localhost:8080/urls/new">--> Create a new TinyURL <--</a>
+      <p>Your TinyURLs:</p>
+      <ul>
+        <% if (urls) {%>
+          <% Object.keys(urls).forEach(function(tinyURL) { %>
+              <li><%= urls[tinyURL] + " --> " + tinyURL; %>
+              <a href="/urls/<%= tinyURL %>">Edit</a>
+              <form method="POST" action="/urls/<%= tinyURL %>/delete">
+                <input type="submit" value="Delete">
+              </form></li>
+          <% }); %>
+        <% } %>
+      </ul>
+    </div>
   </body>
 </html>
 
