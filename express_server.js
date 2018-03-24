@@ -96,7 +96,6 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const hashedPassword = bcrypt.hashSync(password, 10);
   if (email && password) {
     let emailMatch = 0;
     Object.keys(users).forEach(function(user) {
@@ -105,10 +104,10 @@ app.post("/register", (req, res) => {
       }
     });
     if (emailMatch) {
-      res.status(400);
-      res.send(`<html><body>This email is already registered. Please <a href="/login">login</a>.</body></html>\n`);
+      res.status(400).send(`<html><body>This email is already registered. Please <a href="/login">login</a>.</body></html>\n`);
     } else {
       let user_id = generateRandomString();
+      const hashedPassword = bcrypt.hashSync(password, 10);
       users[user_id] = {
         id: user_id,
         email: email,
@@ -153,7 +152,7 @@ app.post("/login", (req, res) => {
   // If match:
   if (userMatch) {
     req.session.user_id = givenID;
-    res.redirect("/");
+    res.redirect("/urls");
 
   // If no match:
   } else {
@@ -163,12 +162,8 @@ app.post("/login", (req, res) => {
 
 // LOGOUT -- Clear session cookie.
 app.post("/logout", (req, res) => {
-  if (req.session.user_id) {
-    req.session.user_id = null;
-    res.redirect("/login");
-  } else {
-    res.status(401).send("<html><body>Access denied.</body></html>\n");
-  }
+  req.session.user_id = null;
+  res.redirect("/login");
 });
 
 // USER'S URL DIRECTORY
@@ -266,6 +261,8 @@ app.post("/urls/:id", (req, res) => {
   if (req.session.user_id) {
     let userId = req.session.user_id;
     let shortURL = req.params.id;
+
+    // Check whether logged-in user owns the TinyURL.
     userMatch = 0;
     if (userId === urlDatabase[shortURL].userID) {
         userMatch++;
@@ -276,6 +273,7 @@ app.post("/urls/:id", (req, res) => {
     } else {
       res.status(403).send("Forbidden.\n");
     }
+
   } else {
     res.status(401).send("Access denied.\n");
   }
