@@ -5,18 +5,7 @@
     <title>TinyApp: Login</title>
   </head>
   <body style="font-size:20px; padding:50px">
-    <% include ./partials/_header %>
-    <% let match = 0 %>
-    <% Object.keys(users).forEach(function(usr) { %>
-      <% if (user === usr) { %>
-        <% match++; %>
-      <% } %>
-    <% }); %>
-    <% if (match) { %>
-      <form action="/logout" method="POST" style="margin:100px">
-        <input type="submit" value="Logout">
-      </form>
-    <% } else { %>
+    <% include partials/_header %>
       <form action="/login" method="POST" style="margin:100px">
         <div><label for="user">Username:</label>
         <input id="user" type="text" name="user" style="width: 300px"></div>
@@ -24,6 +13,5 @@
         <input id="password" type="password" name="password" style="width: 300px"></div>
         <input type="submit" value="Login">
       </form>
-    <% } %>
   </body>
 </html>
