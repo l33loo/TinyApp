@@ -14,8 +14,7 @@ app.use(cookieSession({
   secret: "fujlsispogksdjg"
 }));
 
-// Database of users.
-const users = {
+const usersDb = {
   "l33loo": {
     id: "l33loo",
     email: "l33loo@l33loo.com",
@@ -28,9 +27,7 @@ const users = {
   }
 }
 
-// Database of TinyURLs.
 const urlDatabase = {
-
   "b2xVn2": {
     userID: "l33loo",
     url: "http://www.lighthouselabs.ca",
@@ -50,11 +47,22 @@ function generateRandomString() {
   return randomStr;
 }
 
-// Return a database of user's own TinyURLs.
-function urlsForUser(id) {
+function matchUserToURL(id, url) {
+  if (id === urlDatabase[url].userID) {
+    return true;
+  }
+  return false;
+}
+
+function checkTinyURL(callback) {
+  const urlsArr = Object.getOwnPropertyNames(urlDatabase);
+  return urlsArr.some(callback);
+}
+
+function getURLsForUser(id) {
   const userUrlDatabase = new Object();
   if (urlDatabase) {
-    Object.keys(urlDatabase).forEach(function(tinyUrl) {
+    return checkTinyURL(function(tinyUrl) {
       if (id === urlDatabase[tinyUrl].userID) {
         userUrlDatabase[tinyUrl] = urlDatabase[tinyUrl].url;
       }
@@ -63,46 +71,28 @@ function urlsForUser(id) {
   return userUrlDatabase;
 }
 
-function matchUser(id, url) {
-  if (id === urlDatabase[url].userID) {
-    return true;
-  }
-  return false;
-}
-
-function matchTinyURL(givenUrl) {
-  Object.keys(urlDatabase).forEach(function(tinyURL) {
-    if (tinyURL === givenUrl) {
-      return true;
-    }
+function checkTinyURLmatch(givenURL) {
+  const urlsArr = Object.getOwnPropertyNames(urlDatabase);
+  return checkTinyURL(function(tinyURL) {
+    return givenURL === tinyURL;
   });
-  return false;
 }
 
-function checkEmailRegistered(username) {
-  Object.keys(users).forEach(function(user) {
-    if (username === users[user].email) {
-      return true;
-    }
+function checkUserInfo(callback) {
+  const usersArr = Object.getOwnPropertyNames(usersDb);
+  return usersArr.some(callback);
+}
+
+function checkEmail(givenEmail) {
+  return checkUserInfo(function(user) {
+    return givenEmail === usersDb[user].email;
   });
-  return false;
 }
 
-function checkLoginCred(givenID, givenPassword) {
-  Object.keys(users).forEach(function(user) {
-    if (givenID === users[user].email && (givenPassword === users[user].password ||
-        bcrypt.compareSync(givenPassword, users[user].password))) {
-      return true;
-    }
-  });
-  return false;
-}
-
-function getUserNrFromEmail(email) {
-  Object.keys(users).forEach(function(user) {
-    if (email === users[user].email) {
-      return user;
-    }
+function checkLoginCreds(username, pass) {
+  return checkUserInfo(function(user) {
+    return (username === usersDb[user].email && (pass === usersDb[user].password ||
+        bcrypt.compareSync(pass, usersDb[user].password));
   });
 }
 
@@ -121,7 +111,7 @@ app.get("/register", (req, res) => {
     res.redirect("/urls");
   } else {
     let templateVars = {
-                          users: users,
+                          usersDb: usersDb,
                           user: undefined,
                           email: req.body.email,
                           password: req.body.password
@@ -134,12 +124,12 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if (email && password) {
-    if (checkEmailRegistered(email)) {
+    if (checkEmail(email)) {
       res.status(400).send(`<html><body>This email is already registered. Please <a href="/login">login</a>.</body></html>\n`);
     } else {
       const user_id = generateRandomString();
       const hashedPassword = bcrypt.hashSync(password, 10);
-      users[user_id] = {
+      usersDb[user_id] = {
         id: user_id,
         email: email,
         password: hashedPassword
@@ -159,7 +149,7 @@ app.get("/login", (req, res) => {
   } else {
     const templateVars = {
                           urls: urlDatabase,
-                          users: users,
+                          usersDb: usersDb,
                           user: undefined
                         };
     res.render("login", templateVars);
@@ -169,8 +159,8 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const givenID = req.body.user;
   const givenPassword = req.body.password;
-  if (checkLoginCred(givenID, givenPassword)) {
-    req.session.user_id = getUserNrFromEmail(givenID);
+  if (checkLoginCreds(givenID, givenPassword)) {
+    req.session.user_id = getUserIDFromEmail(givenID);
     res.redirect("/urls");
   } else {
     res.status(403).send(`<html><body>Wrong username/password combination. <a href="/login">Try again</a>.</body></html>\n`);
@@ -187,10 +177,10 @@ app.post("/logout", (req, res) => {
 app.get("/urls", (req, res) => {
   if (req.session.user_id) {
     const userId = req.session.user_id;
-    const database = urlsForUser(userId);
+    const database = getURLsForUser(userId);
     const templateVars = {
                             urls: database,
-                            users: users,
+                            users: usersDb,
                             user: userId
                           };
     res.render("urls_index", templateVars);
@@ -205,7 +195,7 @@ app.get("/urls/new", (req, res) => {
     const userId = req.session.user_id;
     const templateVars = {
                           urls: urlDatabase,
-                          users: users,
+                          users: usersDb,
                           user: userId
                         };
     res.render("urls_new", templateVars);
@@ -220,7 +210,7 @@ app.post("/urls/new", (req, res) => {
     const shortURL = generateRandomString();
     urlDatabase[shortURL] = {
                               url: req.body.longURL,
-                              userID: userId
+                              user: userId
                             };
     res.redirect("/urls/" + shortURL);
   } else {
@@ -235,11 +225,11 @@ app.get("/urls/:id", (req, res) => {
     if (matchTinyURL(req.params.id)) {
 
       // If TinyURL assigned to the user, render page.
-      if (matchUser(userId, req.params.id)) {
+      if (matchUserToURL(userId, req.params.id)) {
         const templateVars = {
                               urls: urlDatabase,
                               shortURL: req.params.id,
-                              users: users,
+                              users: usersDb,
                               user: userId
                             };
         res.render("urls_show", templateVars);
@@ -265,7 +255,7 @@ app.post("/urls/:id", (req, res) => {
   if (req.session.user_id) {
     const userId = req.session.user_id;
     const shortURL = req.params.id;
-    if (matchUser(userId, req.params.id)) {
+    if (matchUserToURL(userId, req.params.id)) {
       urlDatabase[shortURL].url = req.body.longURL;
       res.redirect("/urls");
     } else {
@@ -281,7 +271,7 @@ app.post("/urls/:id", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   if (req.session.user_id) {
     const userId = req.session.user_id;
-    if (matchUser(userId, req.params.id)) {
+    if (matchUserToURL(userId, req.params.id)) {
       delete urlDatabase[req.params.id];
       res.redirect("/urls");
     } else {
@@ -294,7 +284,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // REDIRECT FROM TinyURL TO TARGET WEBSITE. Accessible to all.
 app.get("/u/:shortURL", (req, res) => {
-  if (matchTinyURL(req.params.shortURL)) {
+  if (checkTinyUrlMatch(req.params.shortURL)) {
     const longURL = urlDatabase[req.params.shortURL].url;
     res.redirect(longURL);
   } else {
