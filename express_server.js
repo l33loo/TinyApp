@@ -14,7 +14,7 @@ app.use(cookieSession({
   keys: ["fujlsispog", "anbuagbula", "fbyonyesvl"]
 }));
 
-let usersDb = {
+const usersDb = {
   "l33loo": {
     id: "l33loo",
     email: "l33loo@l33loo.com",
@@ -27,7 +27,7 @@ let usersDb = {
   }
 }
 
-let urlDatabase = {
+const urlDatabase = {
   "b2xVn2": {
     userID: "l33loo",
     url: "http://www.lighthouselabs.ca",
