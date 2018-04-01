@@ -89,6 +89,12 @@ function checkLoginCreds(username, pass) {
   });
 }
 
+function checkSession(cookieUserID) {
+  return checkUserInfo(function(user) {
+    return cookieUserID === user;
+  });
+}
+
 function getUserNrFromEmail(givenEmail) {
   const usersArr = Object.getOwnPropertyNames(usersDb);
   return usersArr.find(function(user) {
@@ -177,6 +183,13 @@ app.post("/logout", (req, res) => {
 // USER'S URL DIRECTORY
 app.get("/urls", (req, res) => {
   if (req.session.user_id) {
+
+    // Check if cookie is valid, i.e., user still exists.
+    if (!checkSession(req.session.user_id)) {
+      req.session.user_id = null;
+      res.redirect("/login");
+    }
+
     const userId = req.session.user_id;
     const database = getURLsForUser(userId);
     const templateVars = {
