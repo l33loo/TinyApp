@@ -96,6 +96,15 @@ function checkLoginCreds(username, pass) {
   });
 }
 
+function getUserNrFromEmail(givenEmail) {
+  const usersArr = Object.getOwnPropertyNames(usersDb);
+  return usersArr.find(function(user) {
+    if (givenEmail === usersDb[user].email) {
+      return user;
+    }
+  });
+}
+
 // HOME
 app.get("/", (req, res) => {
   if (req.session.user_id) {
@@ -160,7 +169,7 @@ app.post("/login", (req, res) => {
   const givenEmail = req.body.user;
   const givenPassword = req.body.password;
   if (checkLoginCreds(givenEmail, givenPassword)) {
-    req.session.user_id = givenEmail;
+    req.session.user_id = getUserNrFromEmail(givenEmail);
     res.redirect("/urls");
   } else {
     res.status(403).send(`<html><body>Wrong username/password combination. <a href="/login">Try again</a>.</body></html>\n`);
@@ -177,6 +186,7 @@ app.post("/logout", (req, res) => {
 app.get("/urls", (req, res) => {
   if (req.session.user_id) {
     const userId = req.session.user_id;
+    // console.log(userId);
     const database = getURLsForUser(userId);
     const templateVars = {
                             urls: database,
