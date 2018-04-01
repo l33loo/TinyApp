@@ -92,7 +92,7 @@ function checkEmail(givenEmail) {
 function checkLoginCreds(username, pass) {
   return checkUserInfo(function(user) {
     return (username === usersDb[user].email && (pass === usersDb[user].password ||
-        bcrypt.compareSync(pass, usersDb[user].password));
+        bcrypt.compareSync(pass, usersDb[user].password)));
   });
 }
 
@@ -149,7 +149,7 @@ app.get("/login", (req, res) => {
   } else {
     const templateVars = {
                           urls: urlDatabase,
-                          usersDb: usersDb,
+                          users: usersDb,
                           user: undefined
                         };
     res.render("login", templateVars);
@@ -157,10 +157,10 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const givenID = req.body.user;
+  const givenEmail = req.body.user;
   const givenPassword = req.body.password;
-  if (checkLoginCreds(givenID, givenPassword)) {
-    req.session.user_id = getUserIDFromEmail(givenID);
+  if (checkLoginCreds(givenEmail, givenPassword)) {
+    req.session.user_id = givenEmail;
     res.redirect("/urls");
   } else {
     res.status(403).send(`<html><body>Wrong username/password combination. <a href="/login">Try again</a>.</body></html>\n`);
